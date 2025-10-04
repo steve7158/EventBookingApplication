@@ -1,0 +1,20 @@
+<mat-toolbar color="primary">
+  <span>{{ title }}</span>
+  <span class="spacer"></span>
+  <button mat-button routerLink="/calendar">
+    <mat-icon>calendar_today</mat-icon>
+    Calendar
+  </button>
+  <button mat-button routerLink="/preferences">
+    <mat-icon>settings</mat-icon>
+    Preferences
+  </button>
+  <button mat-button routerLink="/admin">
+    <mat-icon>admin_panel_settings</mat-icon>
+    Admin
+  </button>
+</mat-toolbar>
+
+<div class="main-content">
+  <router-outlet></router-outlet>
+</div>

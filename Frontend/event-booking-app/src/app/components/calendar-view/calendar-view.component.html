@@ -1,0 +1,168 @@
+<div class="calendar-container">
+  <!-- Header with navigation and title -->
+  <div class="calendar-header">
+    <div class="header-content">
+      <h1>Weekly Event Calendar</h1>
+      <p class="subtitle" *ngIf="userPreferences && userPreferences.selectedCategories.length === 0">
+        No event categories selected. Please go to 
+        <a routerLink="/preferences">Preferences</a> to select your interests.
+      </p>
+      <p class="subtitle" *ngIf="userPreferences && userPreferences.selectedCategories.length > 0">
+        Showing events for your selected categories
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading indicator -->
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+    <p>Loading events...</p>
+  </div>
+
+  <!-- Calendar navigation -->
+  <div class="calendar-navigation" *ngIf="!loading">
+    <button mat-icon-button (click)="previousWeek()" aria-label="Previous week">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    
+    <div class="week-range">
+      <h2>{{ getCurrentWeekRange() }}</h2>
+    </div>
+    
+    <button mat-icon-button (click)="nextWeek()" aria-label="Next week">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+    
+    <button mat-button (click)="goToCurrentWeek()" class="current-week-button">
+      <mat-icon>today</mat-icon>
+      This Week
+    </button>
+  </div>
+
+  <!-- Weekly calendar grid -->
+  <div class="weekly-calendar" *ngIf="!loading">
+    <div class="week-container">
+      <div 
+        class="day-column"
+        *ngFor="let day of weekDays"
+        [class.today]="day.isToday"
+        [class.has-events]="day.events.length > 0">
+        
+        <!-- Day header -->
+        <div class="day-header">
+          <div class="day-name">{{ day.dayName }}</div>
+          <div class="day-number" [class.today-number]="day.isToday">
+            {{ day.dayNumber }}
+          </div>
+        </div>
+        
+        <!-- Events for this day -->
+        <div class="day-events-container">
+          <div class="day-events" *ngIf="day.events.length > 0">
+            <div 
+              class="event-card"
+              *ngFor="let event of day.events"
+              [class.registered]="event.isUserRegistered"
+              [class.full]="isEventFull(event)">
+              
+              <div class="event-header">
+                <div class="event-time">{{ formatTime(event.startTime) }}</div>
+                <mat-chip class="category-chip">{{ event.categoryName }}</mat-chip>
+              </div>
+              
+              <div class="event-title">{{ event.title }}</div>
+              
+              <div class="event-description" *ngIf="event.description">
+                {{ event.description }}
+              </div>
+              
+              <div class="event-attendees">
+                <mat-icon>people</mat-icon>
+                <span>{{ event.currentAttendees }}/{{ event.maxAttendees }}</span>
+              </div>
+              
+              <div class="event-actions">
+                <button 
+                  mat-button 
+                  color="primary"
+                  size="small"
+                  *ngIf="!event.isUserRegistered && !isEventFull(event)"
+                  (click)="registerForEvent(event)"
+                  [attr.aria-label]="'Register for ' + event.title">
+                  <mat-icon>add</mat-icon>
+                  Register
+                </button>
+                
+                <button 
+                  mat-button 
+                  color="warn"
+                  size="small"
+                  *ngIf="event.isUserRegistered"
+                  (click)="unregisterFromEvent(event)"
+                  [attr.aria-label]="'Unregister from ' + event.title">
+                  <mat-icon>remove</mat-icon>
+                  Unregister
+                </button>
+                
+                <button 
+                  mat-stroked-button 
+                  disabled
+                  size="small"
+                  *ngIf="!event.isUserRegistered && isEventFull(event)"
+                  [attr.aria-label]="event.title + ' is full'">
+                  <mat-icon>block</mat-icon>
+                  Full
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- No events for this day -->
+          <div class="no-events-day" *ngIf="day.events.length === 0">
+            <div class="no-events-message">No events</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No preferences message -->
+  <div class="no-preferences" *ngIf="!loading && userPreferences && userPreferences.selectedCategories.length === 0">
+    <mat-card>
+      <mat-card-content>
+        <div class="message-content">
+          <mat-icon>event_busy</mat-icon>
+          <h3>No Event Categories Selected</h3>
+          <p>Please select your event categories in <a routerLink="/preferences">Preferences</a> to see available events in the weekly calendar.</p>
+          <button mat-raised-button color="primary" routerLink="/preferences">
+            <mat-icon>settings</mat-icon>
+            Go to Preferences
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- No events message -->
+  <div class="no-events-message" *ngIf="!loading && userPreferences && userPreferences.selectedCategories.length > 0 && timeSlots.length === 0">
+    <mat-card>
+      <mat-card-content>
+        <div class="message-content">
+          <mat-icon>event_available</mat-icon>
+          <h3>No Events Available</h3>
+          <p>No events are currently scheduled for your selected categories this week.</p>
+          <div class="navigation-actions">
+            <button mat-button (click)="previousWeek()">
+              <mat-icon>chevron_left</mat-icon>
+              Previous Week
+            </button>
+            <button mat-button (click)="nextWeek()">
+              Next Week
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
