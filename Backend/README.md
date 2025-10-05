@@ -3,7 +3,9 @@
 ## Endpoints
 
 ### Users
-POST /users/ - createUser (userId, passwordHash, optional eventIds[])
+POST /users/ - createUser (userId, userName, password, optional eventIds[])
+POST /users/signup - sign up with unique userName & password -> accessToken
+POST /users/login - login with userName & password -> accessToken
 GET /users/{userId} - getUser (auth required)
 PUT /users/{userId}/events - updateUserEvents (add/remove lists) (auth required)
 

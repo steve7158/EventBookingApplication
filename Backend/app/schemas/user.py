@@ -3,11 +3,13 @@ from typing import List, Optional
 
 class UserCreate(BaseModel):
     userId: str
-    passwordHash: str
+    userName: str  # required
+    password: str  # required plain password to be hashed server-side
     eventIds: Optional[List[str]] = None
 
 class UserOut(BaseModel):
     id: str
+    userName: Optional[str] = None
     eventIds: List[str] = []
 
     class Config:
@@ -16,3 +18,20 @@ class UserOut(BaseModel):
 class UserUpdateEvent(BaseModel):
     addEventIds: Optional[List[str]] = None
     removeEventIds: Optional[List[str]] = None
+
+
+class SignUpRequest(BaseModel):
+    userName: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    userName: str
+    password: str
+
+
+class AuthResponse(BaseModel):
+    accessToken: str
+    tokenType: str = "bearer"
+    userId: str
+    userName: str

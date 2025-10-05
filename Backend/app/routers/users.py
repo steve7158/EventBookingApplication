@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.models.user import User
 from app.models.event import Event
-from app.schemas.user import UserCreate, UserOut, UserUpdateEvent
-from app.core.security import hash_password, decode_token
+from app.schemas.user import UserCreate, UserOut, UserUpdateEvent, SignUpRequest, LoginRequest, AuthResponse
+from app.core.security import hash_password, verify_password, decode_token, create_access_token
 from fastapi import Header
 
 router = APIRouter()
@@ -27,7 +27,12 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.id == payload.userId).first()
     if existing:
         raise HTTPException(status_code=400, detail="User already exists")
-    user = User(id=payload.userId, password_hash=payload.passwordHash)
+    # Support optional user_name if provided in payload (ignore if not present to keep backward compat)
+    user = User(
+        id=payload.userId,
+        user_name=payload.userName,
+        password_hash=hash_password(payload.password),
+    )
     if payload.eventIds:
         events = db.query(Event).filter(Event.id.in_(payload.eventIds)).all()
         missing = set(payload.eventIds) - {e.id for e in events}
@@ -37,7 +42,30 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    return UserOut(id=user.id, eventIds=[e.id for e in user.events])
+    return UserOut(id=user.id, userName=user.user_name, eventIds=[e.id for e in user.events])
+
+
+@router.post("/signup", response_model=AuthResponse, status_code=201)
+def signup(payload: SignUpRequest, db: Session = Depends(get_db)):
+    # Ensure unique user_name
+    existing = db.query(User).filter(User.user_name == payload.userName).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    user = User(user_name=payload.userName, password_hash=hash_password(payload.password))
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    token = create_access_token(user.id)
+    return AuthResponse(accessToken=token, userId=user.id, userName=user.user_name)
+
+
+@router.post("/login", response_model=AuthResponse)
+def login(payload: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.user_name == payload.userName).first()
+    if not user or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token(user.id)
+    return AuthResponse(accessToken=token, userId=user.id, userName=user.user_name)
 
 @router.get("/{user_id}", response_model=UserOut)
 def get_user(user_id: str, db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -46,7 +74,7 @@ def get_user(user_id: str, db: Session = Depends(get_db), current=Depends(get_cu
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return UserOut(id=user.id, eventIds=[e.id for e in user.events])
+    return UserOut(id=user.id, userName=user.user_name, eventIds=[e.id for e in user.events])
 
 @router.put("/{user_id}/events", response_model=UserOut)
 def update_user_events(user_id: str, payload: UserUpdateEvent, db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -72,4 +100,4 @@ def update_user_events(user_id: str, payload: UserUpdateEvent, db: Session = Dep
 
     db.commit()
     db.refresh(user)
-    return UserOut(id=user.id, eventIds=[e.id for e in user.events])
+    return UserOut(id=user.id, userName=user.user_name, eventIds=[e.id for e in user.events])

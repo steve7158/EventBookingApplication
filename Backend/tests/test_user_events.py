@@ -15,7 +15,7 @@ def _auth_header(user_id: str):
 
 def test_create_user_no_events():
     user_id = f"user-{uuid.uuid4()}"
-    resp = client.post("/users/", json={"userId": user_id, "passwordHash": "hashed"})
+    resp = client.post("/users/", json={"userId": user_id, "userName": "tester", "password": "secret123"})
     assert resp.status_code == 201, resp.text
     data = resp.json()
     assert data["id"] == user_id
@@ -25,7 +25,7 @@ def test_create_user_no_events():
 def test_add_and_remove_events():
     user_id = f"user-{uuid.uuid4()}"
     # Create user
-    client.post("/users/", json={"userId": user_id, "passwordHash": "hashed"})
+    client.post("/users/", json={"userId": user_id, "userName": "tester2", "password": "secret123"})
     # Auth header
     headers = _auth_header(user_id)
 

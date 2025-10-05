@@ -1,0 +1,20 @@
+<div class="auth-container">
+  <h2>Sign Up</h2>
+  <form (ngSubmit)="onSubmit()" #signupForm="ngForm">
+    <label>User Name
+      <input type="text" name="userName" required [(ngModel)]="userName" />
+    </label>
+
+    <label>Password
+      <input type="password" name="password" required [(ngModel)]="password" />
+    </label>
+
+    <label>Confirm Password
+      <input type="password" name="confirmPassword" required [(ngModel)]="confirmPassword" />
+    </label>
+
+    <button type="submit" [disabled]="loading || !signupForm.form.valid">{{ loading ? 'Signing up...' : 'Create Account' }}</button>
+    <p class="error" *ngIf="error">{{ error }}</p>
+  </form>
+  <p>Already have an account? <a routerLink="/login">Login</a></p>
+</div>

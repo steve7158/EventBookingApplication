@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Table, ForeignKey
+from sqlalchemy import Column, String, Table, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.database.session import Base
 import uuid
@@ -14,7 +14,12 @@ user_events = Table(
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+        UniqueConstraint("user_name", name="uq_users_user_name"),
+    )
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     password_hash = Column(String, nullable=False)
+    # Optional display / login name for the user
+    user_name = Column(String, nullable=False, index=True)
     # events: list of Event objects (we'll expose only their IDs via API)
     events = relationship("Event", secondary=user_events, back_populates="users")

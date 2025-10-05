@@ -1,0 +1,16 @@
+<div class="auth-container">
+  <h2>Login</h2>
+  <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+    <label>User Name
+      <input type="text" name="userName" required [(ngModel)]="userName" />
+    </label>
+
+    <label>Password
+      <input type="password" name="password" required [(ngModel)]="password" />
+    </label>
+
+    <button type="submit" [disabled]="loading || !loginForm.form.valid">{{ loading ? 'Logging in...' : 'Login' }}</button>
+    <p class="error" *ngIf="error">{{ error }}</p>
+  </form>
+  <p>Need an account? <a routerLink="/signup">Sign up</a></p>
+</div>
