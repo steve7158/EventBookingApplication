@@ -21,5 +21,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     # Optional display / login name for the user
     user_name = Column(String, nullable=False, index=True)
+    # Access level for the user (e.g., 'user', 'admin')
+    access_level = Column(String, nullable=False, default='user')
     # events: list of Event objects (we'll expose only their IDs via API)
     events = relationship("Event", secondary=user_events, back_populates="users")

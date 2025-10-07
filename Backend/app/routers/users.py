@@ -10,8 +10,9 @@ from fastapi import Header
 router = APIRouter()
 
 # Simple token auth using Authorization: Bearer <userId> for demo (should use JWT in prod)
-async def get_current_user(authorization: str = Header(None), db: Session = Depends(get_db)) -> User:
+async def get_current_user(authorization: str = Header(None, alias="Authorization"), db: Session = Depends(get_db)) -> User:
     if not authorization or not authorization.lower().startswith("bearer "):
+        print('logger info: ', authorization)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     token = authorization.split(" ", 1)[1]
     user_id = decode_token(token)
@@ -56,7 +57,7 @@ def signup(payload: SignUpRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     token = create_access_token(user.id)
-    return AuthResponse(accessToken=token, userId=user.id, userName=user.user_name)
+    return AuthResponse(accessToken=token, userId=user.id, userName=user.user_name, accessLevel=user.access_level)
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -65,7 +66,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token(user.id)
-    return AuthResponse(accessToken=token, userId=user.id, userName=user.user_name)
+    return AuthResponse(accessToken=token, userId=user.id, userName=user.user_name, accessLevel=user.access_level)
 
 @router.get("/{user_id}", response_model=UserOut)
 def get_user(user_id: str, db: Session = Depends(get_db), current=Depends(get_current_user)):

@@ -1,18 +1,41 @@
 <mat-toolbar color="primary">
   <span>{{ title }}</span>
   <span class="spacer"></span>
-  <button mat-button routerLink="/calendar">
-    <mat-icon>calendar_today</mat-icon>
-    Calendar
-  </button>
-  <button mat-button routerLink="/preferences">
-    <mat-icon>settings</mat-icon>
-    Preferences
-  </button>
-  <button mat-button routerLink="/admin">
-    <mat-icon>admin_panel_settings</mat-icon>
-    Admin
-  </button>
+  
+  <!-- Navigation for authenticated users -->
+  <ng-container *ngIf="isAuthenticated$ | async">
+    <button mat-button routerLink="/calendar">
+      <mat-icon>calendar_today</mat-icon>
+      Calendar
+    </button>
+    <button mat-button routerLink="/preferences">
+      <mat-icon>settings</mat-icon>
+      Preferences
+    </button>
+    <button mat-button routerLink="/admin" *ngIf="isAdminUser$ | async">
+      <mat-icon>admin_panel_settings</mat-icon>
+      Admin
+    </button>
+    <span class="user-info" *ngIf="currentUser$ | async as user">
+      Welcome, {{ user.username }}!
+    </span>
+    <button mat-button (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </ng-container>
+  
+  <!-- Navigation for non-authenticated users -->
+  <ng-container *ngIf="!(isAuthenticated$ | async)">
+    <button mat-button routerLink="/login">
+      <mat-icon>login</mat-icon>
+      Login
+    </button>
+    <button mat-button routerLink="/signup">
+      <mat-icon>person_add</mat-icon>
+      Sign Up
+    </button>
+  </ng-container>
 </mat-toolbar>
 
 <div class="main-content">

@@ -29,3 +29,13 @@ export interface User {
   email: string;
   isAdmin: boolean;
 }
+
+export interface EventRequest {
+  title: string,
+  description: string,
+  category: string,
+  max_attendees: number,
+  date: string,
+  start_time: string,
+  end_time: string
+}

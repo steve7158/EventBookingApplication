@@ -11,8 +11,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
-import { EventCategory, EventTimeSlot } from '../../models/event.model';
-import { EventService } from '../../services/event.service';
+import { EventsService } from '../../services/events.service';
 
 @Component({
   selector: 'app-admin-view',
@@ -36,19 +35,25 @@ import { EventService } from '../../services/event.service';
 })
 export class AdminViewComponent implements OnInit {
   eventForm: FormGroup;
-  categories: EventCategory[] = [];
-  timeSlots: EventTimeSlot[] = [];
+  categories: any[] = [
+    { id: 'Cat 1', name: 'Cat 1' },
+    { id: 'Cat 2', name: 'Cat 2' },
+    { id: 'Cat 3', name: 'Cat 3' },
+    { id: 'Cat 4', name: 'Cat 4' },
+    { id: 'Cat 5', name: 'Cat 5' }
+  ];
+  events: any[] = [];
   displayedColumns: string[] = ['title', 'category', 'date', 'time', 'attendees', 'actions'];
 
   constructor(
     private fb: FormBuilder,
-    private eventService: EventService,
+    private eventsService: EventsService,
     private snackBar: MatSnackBar
   ) {
     this.eventForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
-      categoryId: ['', Validators.required],
+      category: ['', Validators.required],
       date: ['', Validators.required],
       startTime: ['', Validators.required],
       endTime: ['', Validators.required],
@@ -57,21 +62,18 @@ export class AdminViewComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadCategories();
-    this.loadTimeSlots();
+    this.loadEvents();
   }
 
-  private loadCategories(): void {
-    this.eventService.getCategories().subscribe(categories => {
-      this.categories = categories;
-    });
-  }
-
-  private loadTimeSlots(): void {
-    this.eventService.getTimeSlots().subscribe(slots => {
-      this.timeSlots = slots.sort((a, b) => 
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-      );
+  private loadEvents(): void {
+    this.eventsService.getEvents().subscribe({
+      next: (events: any[]) => {
+        this.events = events || [];
+      },
+      error: (error) => {
+        console.error('Error loading events:', error);
+        this.snackBar.open('Error loading events', 'Close', { duration: 3000 });
+      }
     });
   }
 
@@ -79,7 +81,7 @@ export class AdminViewComponent implements OnInit {
     if (this.eventForm.valid) {
       const formValue = this.eventForm.value;
       
-      // Combine date and time
+      // Combine date and time for start and end times
       const startDateTime = this.combineDateTime(formValue.date, formValue.startTime);
       const endDateTime = this.combineDateTime(formValue.date, formValue.endTime);
       
@@ -90,26 +92,31 @@ export class AdminViewComponent implements OnInit {
         return;
       }
 
-      const selectedCategory = this.categories.find(cat => cat.id === formValue.categoryId);
-      
-      const newTimeSlot = {
-        categoryId: formValue.categoryId,
-        categoryName: selectedCategory?.name || '',
+      const eventData = {
         title: formValue.title,
         description: formValue.description,
+        category: formValue.category,
+        maxAttendees: formValue.maxAttendees,
+        date: formValue.date,
         startTime: startDateTime,
-        endTime: endDateTime,
-        maxAttendees: formValue.maxAttendees
+        endTime: endDateTime
       };
 
-      this.eventService.addTimeSlot(newTimeSlot);
-      
-      this.snackBar.open('Event time slot created successfully!', 'Close', {
-        duration: 3000
+      this.eventsService.createEvent(eventData).subscribe({
+        next: (response) => {
+          this.snackBar.open('Event created successfully!', 'Close', {
+            duration: 3000
+          });
+          this.eventForm.reset();
+          this.loadEvents(); // Refresh the list
+        },
+        error: (error) => {
+          console.error('Error creating event:', error);
+          this.snackBar.open('Error creating event', 'Close', {
+            duration: 3000
+          });
+        }
       });
-      
-      this.eventForm.reset();
-      this.loadTimeSlots(); // Refresh the list
     } else {
       this.snackBar.open('Please fill in all required fields correctly', 'Close', {
         duration: 3000
@@ -124,16 +131,16 @@ export class AdminViewComponent implements OnInit {
     return result;
   }
 
-  formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('en-US', {
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
   }
 
-  formatTime(date: Date): string {
-    return new Date(date).toLocaleTimeString('en-US', {
+  formatTime(timeString: string): string {
+    return new Date(timeString).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -142,5 +149,12 @@ export class AdminViewComponent implements OnInit {
   getCategoryName(categoryId: string): string {
     const category = this.categories.find(cat => cat.id === categoryId);
     return category?.name || 'Unknown';
+  }
+
+  deleteEvent(eventId: string): void {
+    // TODO: Implement delete functionality when backend supports it
+    this.snackBar.open('Delete functionality not implemented yet', 'Close', {
+      duration: 3000
+    });
   }
 }

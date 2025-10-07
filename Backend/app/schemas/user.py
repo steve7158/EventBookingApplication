@@ -35,3 +35,4 @@ class AuthResponse(BaseModel):
     tokenType: str = "bearer"
     userId: str
     userName: str
+    accessLevel: str

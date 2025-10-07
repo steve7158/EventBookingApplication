@@ -1,9 +1,10 @@
 """Utility script to populate the local SQLite test database (app.db) with sample users and events.
 
-Run with: python -m test.load_testDB
+Run with: python -m tests.load_testDB
 """
 from datetime import date, time, timedelta
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.database.session import SessionLocal
 from app.database.init_db import init_db
@@ -16,7 +17,7 @@ def reset_db(session: Session):
     # Danger: deletes all data
     session.query(User).delete()
     session.query(Event).delete()
-    session.execute("DELETE FROM user_events")
+    session.execute(text("DELETE FROM user_events"))
     session.commit()
 
 
@@ -25,6 +26,7 @@ def seed_users(session: Session):
     User(password_hash=hash_password("password1"), user_name="alice"),
     User(password_hash=hash_password("password2"), user_name="bob"),
     User(password_hash=hash_password("password3"), user_name="carol"),
+    User(password_hash=hash_password("admin"), user_name="admin", access_level="admin"),
     ]
     session.add_all(users)
     session.commit()

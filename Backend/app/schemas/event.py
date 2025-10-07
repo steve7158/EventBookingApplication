@@ -6,10 +6,10 @@ class EventCreate(BaseModel):
     title: str
     description: Optional[str] = None
     category: Optional[str] = None
-    maxAttendees: int
+    max_attendees: int
     date: date
-    startTime: time
-    endTime: time
+    start_time: time
+    end_time: time
 
 class EventOut(BaseModel):
     id: str

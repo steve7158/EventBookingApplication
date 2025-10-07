@@ -4,13 +4,14 @@ import { UserPreferencesComponent } from './components/user-preferences/user-pre
 import { AdminViewComponent } from './components/admin-view/admin-view.component';
 import { LoginComponent } from './components/login/login.component';
 import { SignupComponent } from './components/signup/signup.component';
+import { authGuard, loginGuard, adminGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/calendar', pathMatch: 'full' },
-  { path: 'calendar', component: CalendarViewComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'signup', component: SignupComponent },
-  { path: 'preferences', component: UserPreferencesComponent },
-  { path: 'admin', component: AdminViewComponent },
-  { path: '**', redirectTo: '/calendar' }
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent, canActivate: [loginGuard] },
+  { path: 'signup', component: SignupComponent, canActivate: [loginGuard] },
+  { path: 'calendar', component: CalendarViewComponent, canActivate: [authGuard] },
+  { path: 'preferences', component: UserPreferencesComponent, canActivate: [authGuard] },
+  { path: 'admin', component: AdminViewComponent, canActivate: [adminGuard] },
+  { path: '**', redirectTo: '/login' }
 ];
