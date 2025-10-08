@@ -1,25 +1,29 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, of, BehaviorSubject } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { EventTimeSlot } from '../models/event.model';
 import { AuthService } from './auth.service';
+
 @Injectable({
   providedIn: 'root'
 })
 export class EventsService {
   private baseUrl = environment.backendurl;
-  events: any[] = [];
-  private authToken = '';
+  private eventsSubject = new BehaviorSubject<any[]>([]);
+  public events$ = this.eventsSubject.asObservable();
+  private eventsLoaded = false;
 
   constructor(private http: HttpClient, private authService: AuthService) {
-    this.getEvents();
-    this.authToken = this.authService.getToken() as string;
+    // Don't automatically load events in constructor
+    // Let components decide when to load
   }
+
   createEvent(eventData: any): Observable<any> {
+    const authToken = this.authService.getToken();
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.authToken}` // Include token if required
+      'Authorization': `Bearer ${authToken}`
     });
 
     // Format the event data with proper date and time formats
@@ -33,16 +37,33 @@ export class EventsService {
       tap(response => {
         // Add the new event to local events array if creation was successful
         if (response) {
-          this.events.push(response);
+          const currentEvents = this.eventsSubject.value;
+          this.eventsSubject.next([...currentEvents, response]);
         }
       })
     );
   }
 
   getEvents(): Observable<any[]> {
+    // If events are already loaded, return cached data
+    if (this.eventsLoaded) {
+      return of(this.eventsSubject.value);
+    }
+
+    // Otherwise, fetch from server
+    return this.fetchEventsFromServer();
+  }
+
+  refreshEvents(): Observable<any[]> {
+    // Force refresh from server
+    return this.fetchEventsFromServer();
+  }
+
+  private fetchEventsFromServer(): Observable<any[]> {
+    const authToken = this.authService.getToken();
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.authToken}` // Include token if required
+      'Authorization': `Bearer ${authToken}`
     });
     
     return this.http.get<any[]>(
@@ -50,14 +71,24 @@ export class EventsService {
       { headers }
     ).pipe(
       tap(response => {
-        // Store the events instead of trying to create them again
-        this.events = response || [];
+        // Store the events and mark as loaded
+        const events = response || [];
+        this.eventsSubject.next(events);
+        this.eventsLoaded = true;
       })
     );
   }
 
-  getTimeSlots() {
-    return this.events;
+  getTimeSlots(): any[] {
+    return this.eventsSubject.value;
+  }
+
+  // Get events as observable for reactive components
+  getEventsObservable(): Observable<any[]> {
+    if (!this.eventsLoaded) {
+      this.fetchEventsFromServer().subscribe();
+    }
+    return this.events$;
   }
 
   private formatEventData(event: any): any {

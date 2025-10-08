@@ -11,7 +11,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [loginGuard] },
   { path: 'signup', component: SignupComponent, canActivate: [loginGuard] },
   { path: 'calendar', component: CalendarViewComponent, canActivate: [authGuard] },
-  { path: 'preferences', component: UserPreferencesComponent, canActivate: [authGuard] },
+  // { path: 'preferences', component: UserPreferencesComponent, canActivate: [authGuard] },
   { path: 'admin', component: AdminViewComponent, canActivate: [adminGuard] },
   { path: '**', redirectTo: '/login' }
 ];

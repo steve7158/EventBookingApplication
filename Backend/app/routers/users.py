@@ -4,8 +4,10 @@ from app.database.session import get_db
 from app.models.user import User
 from app.models.event import Event
 from app.schemas.user import UserCreate, UserOut, UserUpdateEvent, SignUpRequest, LoginRequest, AuthResponse
+from app.schemas.event import EventOut
 from app.core.security import hash_password, verify_password, decode_token, create_access_token
 from fastapi import Header
+from typing import List
 
 router = APIRouter()
 
@@ -68,16 +70,18 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     token = create_access_token(user.id)
     return AuthResponse(accessToken=token, userId=user.id, userName=user.user_name, accessLevel=user.access_level)
 
-@router.get("/{user_id}", response_model=UserOut)
-def get_user(user_id: str, db: Session = Depends(get_db), current=Depends(get_current_user)):
+@router.get("/{user_id}/getUserEvents", response_model=List[EventOut])
+def get_user_events(user_id: str, db: Session = Depends(get_db), current=Depends(get_current_user)):
     if current.id != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return UserOut(id=user.id, userName=user.user_name, eventIds=[e.id for e in user.events])
+    
+    # Return all events associated with this user
+    return user.events
 
-@router.put("/{user_id}/events", response_model=UserOut)
+@router.put("/{user_id}/updateUserEvents", response_model=UserOut)
 def update_user_events(user_id: str, payload: UserUpdateEvent, db: Session = Depends(get_db), current=Depends(get_current_user)):
     if current.id != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -102,3 +106,13 @@ def update_user_events(user_id: str, payload: UserUpdateEvent, db: Session = Dep
     db.commit()
     db.refresh(user)
     return UserOut(id=user.id, userName=user.user_name, eventIds=[e.id for e in user.events])
+
+@router.get("/{user_id}", response_model=UserOut)
+def get_user(user_id: str, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    if current.id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return UserOut(id=user.id, userName=user.user_name, eventIds=[e.id for e in user.events])
+

@@ -7,13 +7,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { EventTimeSlot, UserPreferences } from '../../models/event.model';
-import { EventService } from '../../services/event.service';
+import { EventsService } from '../../services/events.service';
 import { UserPreferencesService } from '../../services/user-preferences.service';
-
+import { UserService } from '../../services/user.service';
+import { UserPreferencesComponent } from '../user-preferences/user-preferences.component';
 interface CalendarDay {
   date: Date;
-  events: EventTimeSlot[];
+  events: any[];
   dayNumber: number;
   dayName: string;
   isToday: boolean;
@@ -29,14 +29,16 @@ interface CalendarDay {
     MatIconModule,
     MatChipsModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    UserPreferencesComponent
   ],
   templateUrl: './calendar-view.component.html',
   styleUrl: './calendar-view.component.scss'
 })
 export class CalendarViewComponent implements OnInit {
-  timeSlots: EventTimeSlot[] = [];
-  userPreferences: UserPreferences | null = null;
+  timeSlots: any[] = [];
+  userPreferences: any = null;
+  userRegisteredEvents: string[] = []; // Store user's registered event IDs
   loading = false;
   
   // Calendar-specific properties
@@ -46,21 +48,52 @@ export class CalendarViewComponent implements OnInit {
   dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   constructor(
-    private eventService: EventService,
+    private eventsService: EventsService,
     private userPreferencesService: UserPreferencesService,
+    private userService: UserService,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
-    this.setCurrentWeek();
+    this.setCurrentWeekStart();
+    this.loadUserRegisteredEvents();
     this.loadUserPreferences();
   }
 
-  private setCurrentWeek(): void {
+  private setCurrentWeekStart(): void {
     const today = new Date();
     // Set to start of current week (Sunday)
     this.currentWeekStart = new Date(today);
     this.currentWeekStart.setDate(today.getDate() - today.getDay());
+    // Don't generate the week here - wait for data to load
+  }
+
+  private loadUserRegisteredEvents(): void {
+    this.userService.getUserEvents().subscribe({
+      next: (response: any) => {
+        // Extract event IDs from the response
+        if (response && response.events) {
+          this.userRegisteredEvents = response.events.map((event: any) => event.id || event.event_id);
+        } else if (Array.isArray(response)) {
+          this.userRegisteredEvents = response.map((event: any) => event.id || event.event_id);
+        } else {
+          this.userRegisteredEvents = [];
+        }
+        console.log('User registered events:', this.userRegisteredEvents);
+        // Regenerate the calendar to show updated registration status
+        this.generateWeek();
+      },
+      error: (error: any) => {
+        console.error('Error loading user registered events:', error);
+        this.userRegisteredEvents = [];
+        // Still regenerate the calendar even if there's an error
+        this.generateWeek();
+      }
+    });
+  }
+
+  private setCurrentWeek(): void {
+    this.setCurrentWeekStart();
     this.generateWeek();
   }
 
@@ -72,24 +105,28 @@ export class CalendarViewComponent implements OnInit {
   }
 
   private loadTimeSlots(): void {
-    if (!this.userPreferences || this.userPreferences.selectedCategories.length === 0) {
-      this.timeSlots = [];
-      this.generateWeek();
-      return;
-    }
-
     this.loading = true;
-    this.eventService.getTimeSlotsForCategories(this.userPreferences.selectedCategories)
+    this.eventsService.getEvents()
       .subscribe({
-        next: (slots) => {
-          this.timeSlots = slots.sort((a, b) => 
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        next: (events: any[]) => {
+          // Filter events based on user preferences if categories are selected
+          if (this.userPreferences && this.userPreferences.selectedCategories.length > 0) {
+            this.timeSlots = events.filter(event => 
+              this.userPreferences.selectedCategories.includes(event.category)
+            );
+          } else {
+            this.timeSlots = events;
+          }
+          
+          // Sort events by start time
+          this.timeSlots = this.timeSlots.sort((a: any, b: any) => 
+            new Date(a.start_time || a.startTime).getTime() - new Date(b.start_time || b.startTime).getTime()
           );
           this.loading = false;
           this.generateWeek();
         },
-        error: (error) => {
-          console.error('Error loading time slots:', error);
+        error: (error: any) => {
+          console.error('Error loading events:', error);
           this.loading = false;
           this.generateWeek();
         }
@@ -116,12 +153,20 @@ export class CalendarViewComponent implements OnInit {
     }
   }
 
-  private getEventsForDate(date: Date): EventTimeSlot[] {
-    return this.timeSlots.filter(event => {
-      const eventDate = new Date(event.startTime);
+  private getEventsForDate(date: Date): any[] {
+    const eventsForDate = this.timeSlots.filter(event => {
+      const eventDate = new Date(event.date);
       return eventDate.toDateString() === date.toDateString();
-    }).sort((a, b) => 
-      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    });
+
+    // Add registration status to each event
+    const eventsWithRegistrationStatus = eventsForDate.map(event => ({
+      ...event,
+      isUserRegistered: this.userRegisteredEvents.includes(event.id)
+    }));
+
+    return eventsWithRegistrationStatus.sort((a: any, b: any) => 
+      new Date(a.start_time || a.startTime).getTime() - new Date(b.start_time || b.startTime).getTime()
     );
   }
 
@@ -161,52 +206,50 @@ export class CalendarViewComponent implements OnInit {
     return date.toDateString() === today.toDateString();
   }
 
-  registerForEvent(event: EventTimeSlot): void {
+  registerForEvent(event: any): void {
     if (event.isUserRegistered || event.currentAttendees >= event.maxAttendees) {
       return;
     }
 
-    this.eventService.registerForEvent(event.id).subscribe({
-      next: (success) => {
-        if (success) {
-          this.snackBar.open('Successfully registered for the event!', 'Close', {
-            duration: 3000
-          });
-        } else {
-          this.snackBar.open('Failed to register for the event.', 'Close', {
-            duration: 3000
-          });
-        }
+    // Use UserService to add event to user
+    this.userService.addEventToUser(event.id).subscribe({
+      next: (response) => {
+        this.snackBar.open('Successfully registered for the event!', 'Close', {
+          duration: 3000
+        });
+        // Add event ID to registered events list
+        this.userRegisteredEvents.push(event.id);
+        // Refresh the calendar to show updated status
+        this.generateWeek();
       },
       error: (error) => {
-        console.error('Registration error:', error);
-        this.snackBar.open('An error occurred during registration.', 'Close', {
+        console.error('Error registering for event:', error);
+        this.snackBar.open('Failed to register for the event. Please try again.', 'Close', {
           duration: 3000
         });
       }
     });
   }
 
-  unregisterFromEvent(event: EventTimeSlot): void {
+  unregisterFromEvent(event: any): void {
     if (!event.isUserRegistered) {
       return;
     }
 
-    this.eventService.unregisterFromEvent(event.id).subscribe({
-      next: (success) => {
-        if (success) {
-          this.snackBar.open('Successfully unregistered from the event!', 'Close', {
-            duration: 3000
-          });
-        } else {
-          this.snackBar.open('Failed to unregister from the event.', 'Close', {
-            duration: 3000
-          });
-        }
+    // Use UserService to remove event from user
+    this.userService.removeEventFromUser(event.id).subscribe({
+      next: (response) => {
+        this.snackBar.open('Successfully unregistered from the event!', 'Close', {
+          duration: 3000
+        });
+        // Remove event ID from registered events list
+        this.userRegisteredEvents = this.userRegisteredEvents.filter(id => id !== event.id);
+        // Refresh the calendar to show updated status
+        this.generateWeek();
       },
       error: (error) => {
-        console.error('Unregistration error:', error);
-        this.snackBar.open('An error occurred during unregistration.', 'Close', {
+        console.error('Error unregistering from event:', error);
+        this.snackBar.open('Failed to unregister from the event. Please try again.', 'Close', {
           duration: 3000
         });
       }
@@ -220,7 +263,13 @@ export class CalendarViewComponent implements OnInit {
     });
   }
 
-  isEventFull(event: EventTimeSlot): boolean {
+  isEventFull(event: any): boolean {
     return event.currentAttendees >= event.maxAttendees;
+  }
+
+  // Handle filter changes from user preferences component
+  onFiltersChanged(selectedCategories: string[]): void {
+    this.userPreferences = { selectedCategories };
+    this.loadTimeSlots();
   }
 }

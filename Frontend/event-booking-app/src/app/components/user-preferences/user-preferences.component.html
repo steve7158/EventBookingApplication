@@ -1,29 +1,40 @@
-<div class="preferences-container">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>User Preferences</mat-card-title>
-      <mat-card-subtitle>Select the event categories you're interested in</mat-card-subtitle>
-    </mat-card-header>
+<div class="preferences-snackbar" [class.expanded]="isExpanded">
+  <div class="snackbar-header" (click)="toggleExpanded()">
+    <div class="header-content">
+      <mat-icon class="preferences-icon">tune</mat-icon>
+      <span class="title">Filter Events</span>
+      <mat-chip-set class="selected-chips" *ngIf="!isExpanded && selectedCategories.length > 0">
+        <mat-chip *ngFor="let categoryId of selectedCategories.slice(0, 3)">
+          {{ getCategoryName(categoryId) }}
+        </mat-chip>
+        <mat-chip *ngIf="selectedCategories.length > 3" class="more-chip">
+          +{{ selectedCategories.length - 3 }} more
+        </mat-chip>
+      </mat-chip-set>
+      <span class="no-filters" *ngIf="!isExpanded && selectedCategories.length === 0">
+        All Categories
+      </span>
+    </div>
+    <mat-icon class="expand-icon" [class.rotated]="isExpanded">expand_more</mat-icon>
+  </div>
+  
+  <div class="snackbar-content" *ngIf="isExpanded">
+    <div class="categories-grid">
+      <mat-checkbox 
+        *ngFor="let category of categories"
+        class="category-checkbox"
+        [checked]="isCategorySelected(category.id)"
+        (change)="onCategoryToggle(category.id, $event.checked)">
+        {{ category.name }}
+      </mat-checkbox>
+    </div>
     
-    <mat-card-content>
-      <div class="categories-list">
-        <div class="category-item" *ngFor="let category of categories">
-          <mat-checkbox 
-            [checked]="isCategorySelected(category.id)"
-            (change)="onCategoryToggle(category.id, $event.checked)">
-            {{ category.name }}
-          </mat-checkbox>
-          <p class="category-description" *ngIf="category.description">
-            {{ category.description }}
-          </p>
-        </div>
-      </div>
-    </mat-card-content>
-    
-    <mat-card-actions>
-      <button mat-raised-button color="primary" (click)="savePreferences()">
-        Save Preferences
+    <div class="actions">
+      <button mat-button (click)="clearAll()">Clear All</button>
+      <button mat-button (click)="selectAll()">Select All</button>
+      <button mat-raised-button color="primary" (click)="applyFilters()">
+        Apply Filters
       </button>
-    </mat-card-actions>
-  </mat-card>
+    </div>
+  </div>
 </div>

@@ -1,39 +1,199 @@
-.preferences-container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.categories-list {
-  margin: 20px 0;
-}
-
-.category-item {
+.preferences-snackbar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   margin-bottom: 16px;
-  padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #fafafa;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &.expanded {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  }
 }
 
-.category-item:hover {
-  background-color: #f5f5f5;
+.snackbar-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
-.category-description {
-  margin: 8px 0 0 32px;
-  color: #666;
-  font-size: 0.9em;
+.header-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 12px;
 }
 
-mat-card {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.preferences-icon {
+  font-size: 20px;
+  opacity: 0.9;
 }
 
-mat-card-header {
-  padding-bottom: 16px;
+.title {
+  font-weight: 500;
+  font-size: 16px;
 }
 
-mat-card-actions {
+.selected-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  
+  mat-chip {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 12px;
+    height: 24px;
+    line-height: 24px;
+    border-radius: 12px;
+    
+    &.more-chip {
+      background-color: rgba(255, 255, 255, 0.3);
+      font-weight: 500;
+    }
+  }
+}
+
+.no-filters {
+  font-size: 14px;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.expand-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &.rotated {
+    transform: rotate(180deg);
+  }
+}
+
+.snackbar-content {
+  padding: 0 20px 20px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.category-checkbox {
+  ::ng-deep {
+    .mdc-checkbox {
+      padding: 8px;
+    }
+    
+    .mdc-form-field {
+      color: white;
+    }
+    
+    .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+      background-color: rgba(255, 255, 255, 0.9);
+      border-color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .mdc-checkbox__checkmark {
+      color: #667eea;
+    }
+    
+    .mdc-checkbox__native-control:enabled ~ .mdc-checkbox__background {
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+  }
+  
+  font-size: 14px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 16px;
   padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  
+  button {
+    &:not([color="primary"]) {
+      color: rgba(255, 255, 255, 0.8);
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+    }
+    
+    &[color="primary"] {
+      background-color: rgba(255, 255, 255, 0.9);
+      color: #667eea;
+      font-weight: 500;
+      
+      &:hover {
+        background-color: white;
+      }
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .categories-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  
+  .snackbar-header {
+    padding: 12px 16px;
+  }
+  
+  .snackbar-content {
+    padding: 0 16px 16px 16px;
+  }
+  
+  .selected-chips {
+    mat-chip {
+      font-size: 11px;
+      height: 22px;
+      line-height: 22px;
+    }
+  }
+  
+  .actions {
+    flex-direction: column;
+    gap: 8px;
+    
+    button {
+      width: 100%;
+    }
+  }
 }
