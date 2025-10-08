@@ -15,7 +15,7 @@ export class UserService {
     private authService: AuthService
   ) { }
 
-  addEventToUser(eventId: string): Observable<any> {
+  addEventToUser(payload: { addEventIds: string[] }): Observable<any> {
     const currentUser = this.authService.getCurrentUser();
     
     if (!currentUser || !currentUser.id) {
@@ -27,10 +27,6 @@ export class UserService {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${authToken}`
     });
-
-    const payload = {
-      addEvent: [eventId]
-    };
 
     return this.http.put<any>(
       `${this.baseUrl}users/${currentUser.id}/updateUserEvents`,
@@ -39,7 +35,7 @@ export class UserService {
     );
   }
 
-  removeEventFromUser(eventId: string): Observable<any> {
+  removeEventFromUser(payload: { removeEventIds: string[] }): Observable<any> {
     const currentUser = this.authService.getCurrentUser();
     
     if (!currentUser || !currentUser.id) {
@@ -51,10 +47,6 @@ export class UserService {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${authToken}`
     });
-
-    const payload = {
-      removeEvent: [eventId]
-    };
 
     return this.http.put<any>(
       `${this.baseUrl}users/${currentUser.id}/updateUserEvents`,

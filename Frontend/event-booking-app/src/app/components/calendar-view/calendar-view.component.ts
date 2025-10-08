@@ -211,12 +211,14 @@ export class CalendarViewComponent implements OnInit {
       return;
     }
 
-    // Use UserService to add event to user
-    this.userService.addEventToUser(event.id).subscribe({
+    // Use UserService to add event to user with correct payload format
+    const payload = { addEventIds: [event.id] };
+    this.userService.addEventToUser(payload).subscribe({
       next: (response) => {
         this.snackBar.open('Successfully registered for the event!', 'Close', {
           duration: 3000
         });
+
         // Add event ID to registered events list
         this.userRegisteredEvents.push(event.id);
         // Refresh the calendar to show updated status
@@ -236,8 +238,9 @@ export class CalendarViewComponent implements OnInit {
       return;
     }
 
-    // Use UserService to remove event from user
-    this.userService.removeEventFromUser(event.id).subscribe({
+    // Use UserService to remove event from user with correct payload format
+    const payload = { removeEventIds: [event.id] };
+    this.userService.removeEventFromUser(payload).subscribe({
       next: (response) => {
         this.snackBar.open('Successfully unregistered from the event!', 'Close', {
           duration: 3000
@@ -256,8 +259,27 @@ export class CalendarViewComponent implements OnInit {
     });
   }
 
-  formatTime(date: Date): string {
-    return new Date(date).toLocaleTimeString('en-US', {
+  formatTime(time: string | Date): string {
+    if (typeof time === 'string') {
+      // Handle time format like "17:00:00.000000"
+      const timeParts = time.split(':');
+      if (timeParts.length >= 2) {
+        const hour = parseInt(timeParts[0]);
+        const minute = parseInt(timeParts[1]);
+        
+        // Create a date object with today's date and the specified time
+        const timeDate = new Date();
+        timeDate.setHours(hour, minute, 0, 0);
+        
+        return timeDate.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+    }
+    
+    // Fallback for Date objects
+    return new Date(time).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     });

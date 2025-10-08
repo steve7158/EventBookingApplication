@@ -98,9 +98,16 @@ def update_user_events(user_id: str, payload: UserUpdateEvent, db: Session = Dep
         for e in events_to_add:
             if e not in user.events:
                 user.events.append(e)
+                # Increment current_attendees count
+                e.current_attendees += 1
 
     # Remove events
     if payload.removeEventIds:
+        events_to_remove = db.query(Event).filter(Event.id.in_(payload.removeEventIds)).all()
+        for e in events_to_remove:
+            if e in user.events:
+                # Decrement current_attendees count
+                e.current_attendees = max(0, e.current_attendees - 1)
         user.events = [e for e in user.events if e.id not in set(payload.removeEventIds)]
 
     db.commit()

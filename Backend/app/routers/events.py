@@ -28,6 +28,7 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)):
         description=payload.description,
         category=payload.category,
         max_attendees=payload.max_attendees,
+        current_attendees=payload.current_attendees or 0,
         date=payload.date,
         start_time=payload.start_time,
         end_time=payload.end_time,

@@ -12,6 +12,7 @@ class Event(Base):
     description = Column(String, nullable=True)
     category = Column(String, nullable=True)
     max_attendees = Column(Integer, nullable=False)
+    current_attendees = Column(Integer, nullable=False, default=0)
     date = Column(Date, nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)

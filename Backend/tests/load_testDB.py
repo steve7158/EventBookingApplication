@@ -80,6 +80,13 @@ def link_users_events(session: Session, users, events):
         session.commit()
 
 
+def update_event_attendee_counts(session: Session, events):
+    """Update current_attendees count for each event based on actual user relationships"""
+    for event in events:
+        event.current_attendees = len(event.users)
+    session.commit()
+
+
 def main():
     init_db()
     db: Session = SessionLocal()
@@ -88,12 +95,14 @@ def main():
         users = seed_users(db)
         events = seed_events(db)
         link_users_events(db, users, events)
+        # Update current_attendees count based on actual relationships
+        update_event_attendee_counts(db, events)
         print("Seed completed. Users:")
         for u in users:
-            print(f" - {u.id} (events: {[e.title for e in u.events]})")
+            print(f" - {u.id} ({u.user_name}): events: {[e.title for e in u.events]}")
         print("Events:")
         for e in events:
-            print(f" - {e.id}: {e.title} (attendees: {len(e.users)})")
+            print(f" - {e.id}: {e.title} (current_attendees: {e.current_attendees}/{e.max_attendees})")
     finally:
         db.close()
 

@@ -66,8 +66,8 @@
               [class.full]="isEventFull(event)">
               
               <div class="event-header">
-                <div class="event-time">{{ formatTime(event.startTime) }}</div>
-                <mat-chip class="category-chip">{{ event.categoryName }}</mat-chip>
+                <div class="event-time">{{ formatTime(event.start_time) }}</div>
+                <mat-chip class="category-chip">{{ event.category }}</mat-chip>
               </div>
               
               <div class="event-title">{{ event.title }}</div>
@@ -78,7 +78,7 @@
               
               <div class="event-attendees">
                 <mat-icon>people</mat-icon>
-                <span>{{ event.currentAttendees }}/{{ event.maxAttendees }}</span>
+                <span>{{ event.current_attendees }}/{{ event.max_attendees }}</span>
               </div>
               
               <div class="event-actions">
