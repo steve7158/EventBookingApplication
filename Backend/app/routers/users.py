@@ -51,10 +51,10 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
 @router.post("/signup", response_model=AuthResponse, status_code=201)
 def signup(payload: SignUpRequest, db: Session = Depends(get_db)):
     # Ensure unique user_name
-    existing = db.query(User).filter(User.user_name == payload.userName).first()
+    existing = db.query(User).filter(User.user_name == payload.username).first()
     if existing:
         raise HTTPException(status_code=400, detail="Username already taken")
-    user = User(user_name=payload.userName, password_hash=hash_password(payload.password))
+    user = User(user_name=payload.username, password_hash=hash_password(payload.password))
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -64,7 +64,7 @@ def signup(payload: SignUpRequest, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=AuthResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.user_name == payload.userName).first()
+    user = db.query(User).filter(User.user_name == payload.username).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token(user.id)

@@ -5,7 +5,12 @@ import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface LoginRequest {
-  userName: string;
+  username: string;
+  password: string;
+}
+
+export interface SignupRequest {
+  username: string;
   password: string;
 }
 
@@ -20,8 +25,8 @@ export interface LoginResponse {
 export interface User {
   id: string;
   username: string;
-  email: string;
   accessLevel: string;
+  email?: string;
 }
 
 @Injectable({
@@ -56,13 +61,24 @@ export class AuthService {
           const user: User = {
             id: response.userId,
             username: response.userName,
-            email: '', // Not provided in AuthResponse
             accessLevel: response.accessLevel // Not provided in AuthResponse
           };
           // Store token and user data
           this.setAuthData(response.accessToken, user);
         }
       })
+    );
+  }
+
+  signup(signupData: SignupRequest): Observable<any> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    return this.http.post<any>(
+      `${this.baseUrl}users/signup`,
+      signupData,
+      { headers: headers }
     );
   }
 

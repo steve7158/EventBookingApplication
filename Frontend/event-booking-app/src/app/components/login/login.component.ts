@@ -12,7 +12,7 @@ import { AuthService, LoginRequest } from '../../services/auth.service';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
-  userName = '';
+  username = '';
   password = '';
   loading = false;
   error: string | null = null;
@@ -28,7 +28,7 @@ export class LoginComponent {
     
     try {
       const credentials: LoginRequest = {
-        userName: this.userName,
+        username: this.username,
         password: this.password
       };
 

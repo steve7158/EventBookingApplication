@@ -21,12 +21,12 @@ class UserUpdateEvent(BaseModel):
 
 
 class SignUpRequest(BaseModel):
-    userName: str
+    username: str
     password: str
 
 
 class LoginRequest(BaseModel):
-    userName: str
+    username: str
     password: str
 
 
